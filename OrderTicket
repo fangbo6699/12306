@@ -1,0 +1,93 @@
+#encoding:utf-8
+
+"""
+@project =DataHandle
+@file=12306
+@user=Administrator
+@create_time=2018/12/14_3:55
+"""
+from selenium import webdriver
+from lxml import etree
+from xml.etree import cElementTree as ET
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
+
+class orderticket():
+    # chromedriver的绝对路径
+    driver_path = r'E:\chrome\chromedriver\chromedriver.exe'
+    def __init__(self):
+        self.driver = webdriver.Chrome(executable_path=self.driver_path)
+        self.login_url="https://kyfw.12306.cn/otn/resources/login.html"
+        self.my_url="https://kyfw.12306.cn/otn/view/index.html"
+        self.ticket_url="https://kyfw.12306.cn/otn/leftTicket/init?linktypeid=dc"
+        self.zhifu_url="https://kyfw.12306.cn/otn/confirmPassenger/initDc"
+
+    def login(self):
+        self.driver.get(self.login_url)
+        WebDriverWait(self.driver, 100).until(
+                ec.url_to_be(self.my_url)
+            )
+
+
+    def wait_input(self):
+        self.from_station=input("from_station:")
+        self.to_station=input("to_station:")
+        self.to_data=input("to_data:")
+        self.peoples=input("peoples:").split(",")
+        self.trains=input("trains:").split(",")
+    def order(self):
+        self.driver.get(self.ticket_url)
+        WebDriverWait(self.driver, 1000).until(
+                ec.text_to_be_present_in_element_value((By.ID,"fromStationText"),self.from_station)
+            )
+        WebDriverWait(self.driver, 1000).until(
+                ec.text_to_be_present_in_element_value((By.ID,"toStationText"),self.to_station)
+            )
+        # WebDriverWait(self.driver, 1000).until(
+        #         ec.text_to_be_present_in_element_value((By.ID,"train_date"),self.to_data)
+        #     )
+        # WebDriverWait(self.driver, 1000).until(
+        #         ec.element_to_be_clickable((By.ID,"query_ticket"))
+        #     )
+        seachbutton=self.driver.find_element_by_id("query_ticket")
+        seachbutton.click()
+        print("hhhhhhhhhhhhhhhhhhhhhh")
+        WebDriverWait(self.driver, 1000).until(
+
+            ec.presence_of_element_located((By.XPATH,"////tbody[@id='queryLeftTable']/tr"))
+        )
+        trs=self.driver.find_element_by_xpath("//tbody[@id='queryLeftTable']/tr[not(@datatran)]")
+        print(trs)
+        for tr in trs:
+            train_nums=tr.find_element_by_class_name("number").text
+            if self.trains in train_nums:
+                isticket=tr.find_element_by_xpath(".//td[4]").text
+                if isticket == "有" or isticket.isdigit:
+                    orderticketbtn=tr.tr.find_element_by_xpath(".//td[-1]")
+                    orderticketbtn.click()
+                    WebDriverWait(self.driver,1000).until(
+
+                        ec.url_to_be(self.zhifu_url)
+                    )
+
+                    normal_passengers =self.driver.find_element_by_id('normal_passenger_id')
+                    orderpeoples=normal_passengers.find_elements_by_tag_name("input")
+                    for plople in orderpeoples:
+                        plople.click()
+                        ok=self.driver.find_element_by_id("dialog_xsertcj_ok")
+                        ok.click()
+                        submitOrder_id = self.driver.find_element_by_id("submitOrder_id")
+                        submitOrder_id.click()
+
+
+
+    def main(self):
+        self.wait_input()
+        self.login()
+        self.order()
+
+if __name__ == '__main__':
+    spider=orderticket()
+    spider.main()
+
